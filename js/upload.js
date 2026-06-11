@@ -1,5 +1,5 @@
-/* ===== UPLOAD DE FOTOS: DRAG-AND-DROP + COMPRESSÃO ===== */
-let fotosPendentes = [];
+/* ===== UPLOAD DE FOTOS VIA SUPABASE ===== */
+let arquivosPendentes = []; // agora guarda File/Blob, não base64
 
 (function () {
   const modalUpload = $('#modalUpload');
@@ -7,7 +7,7 @@ let fotosPendentes = [];
   const inputFotos = $('#inputFotos');
 
   $('#btnAddFoto').addEventListener('click', () => {
-    fotosPendentes = [];
+    arquivosPendentes = [];
     $('#previewGrid').innerHTML = '';
     $('#inputTitulo').value = '';
     modalUpload.classList.add('aberto');
@@ -29,54 +29,69 @@ let fotosPendentes = [];
   function processarArquivos(files) {
     [...files].forEach(file => {
       if (!file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = ev => comprimirImagem(ev.target.result, dataUrl => {
-        fotosPendentes.push(dataUrl);
+      comprimirParaBlob(file, blob => {
+        arquivosPendentes.push(blob);
+        const url = URL.createObjectURL(blob);
         const img = document.createElement('img');
-        img.src = dataUrl;
+        img.src = url;
         img.alt = 'Pré-visualização';
         $('#previewGrid').appendChild(img);
       });
-      reader.readAsDataURL(file);
     });
     inputFotos.value = '';
   }
 
-  function comprimirImagem(src, cb) {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1100;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        const r = Math.min(MAX / w, MAX / h);
-        w = Math.round(w * r);
-        h = Math.round(h * r);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      cb(canvas.toDataURL('image/jpeg', .78));
+  function comprimirParaBlob(file, cb) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1400;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          const r = Math.min(MAX / w, MAX / h);
+          w = Math.round(w * r);
+          h = Math.round(h * r);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob => cb(blob), 'image/jpeg', 0.82);
+      };
+      img.src = ev.target.result;
     };
-    img.src = src;
+    reader.readAsDataURL(file);
   }
 
-  $('#btnSalvarFotos').addEventListener('click', () => {
-    if (!fotosPendentes.length) {
+  $('#btnSalvarFotos').addEventListener('click', async () => {
+    if (!arquivosPendentes.length) {
       mostrarToast('Escolha pelo menos uma foto 🌷');
       return;
     }
-    const fotos = carregarFotos();
+
     const cat = $('#selCategoria').value;
     const titulo = $('#inputTitulo').value.trim();
-    fotosPendentes.forEach(src =>
-      fotos.unshift({ id: Date.now() + Math.random(), src, cat, titulo })
-    );
-    if (salvarFotos(fotos)) {
+    const btnSalvar = $('#btnSalvarFotos');
+
+    btnSalvar.textContent = 'Enviando...';
+    btnSalvar.disabled = true;
+
+    let sucesso = 0;
+    for (const blob of arquivosPendentes) {
+      const resultado = await uploadFoto(blob, cat, titulo);
+      if (resultado) sucesso++;
+    }
+
+    btnSalvar.textContent = 'Salvar fotos';
+    btnSalvar.disabled = false;
+
+    if (sucesso > 0) {
       fecharModais();
-      const n = fotosPendentes.length;
-      mostrarToast(`${n} foto${n > 1 ? 's' : ''} adicionada${n > 1 ? 's' : ''} ao portfólio! 🌸`);
-      fotosPendentes = [];
+      mostrarToast(`${sucesso} foto${sucesso > 1 ? 's' : ''} adicionada${sucesso > 1 ? 's' : ''} ao portfólio! 🌸`);
+      arquivosPendentes = [];
+      await renderGaleria();
+      await renderDestaques();
     }
   });
 })();

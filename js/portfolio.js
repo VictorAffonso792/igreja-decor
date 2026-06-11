@@ -26,30 +26,36 @@ function placeholderHTML(cor, texto) {
   </div>`;
 }
 
-function renderGaleria() {
+async function renderGaleria() {
   const galeria = $('#galeria');
-  const fotos = carregarFotos();
+  galeria.innerHTML = '<div style="text-align:center;padding:40px;color:var(--tinta-suave)">Carregando fotos...</div>';
+  
+  const fotos = await carregarFotos();
   galeria.innerHTML = '';
 
   if (fotos.length) {
     const filtradas = fotos.filter(f => filtroAtivo === 'todos' || f.cat === filtroAtivo);
     if (!filtradas.length) {
-      galeria.innerHTML = `<div class="galeria-vazia">Ainda não há fotos nessa categoria 🌱<br><small>Use a Área da Igreja Decor para adicionar.</small></div>`;
+      galeria.innerHTML = '<div class="galeria-vazia">Ainda não há fotos nessa categoria 🌱<br><small>Use a Área da Igreja Decor para adicionar.</small></div>';
       return;
     }
     filtradas.forEach(f => {
       const card = document.createElement('div');
       card.className = 'foto-card';
       card.innerHTML = `
-        <img src="${f.src}" alt="${f.titulo || NOMES_CAT[f.cat]}" loading="lazy">
-        <div class="foto-info"><strong>${f.titulo || 'Trabalho Igreja Decor'}</strong><span>${NOMES_CAT[f.cat]}</span></div>
+        <img src="${f.src}" alt="${f.titulo || NOMES_CAT[f.cat] || 'Trabalho Igreja Decor'}" loading="lazy">
+        <div class="foto-info"><strong>${f.titulo || 'Trabalho Igreja Decor'}</strong><span>${NOMES_CAT[f.cat] || f.cat}</span></div>
         <button class="foto-del" aria-label="Excluir foto">🗑</button>`;
       card.querySelector('img').addEventListener('click', () => abrirLightbox(f));
-      card.querySelector('.foto-del').addEventListener('click', ev => {
+      card.querySelector('.foto-del').addEventListener('click', async (ev) => {
         ev.stopPropagation();
         if (confirm('Excluir esta foto do portfólio?')) {
-          excluirFoto(f.id);
-          mostrarToast('Foto removida 🍂');
+          const ok = await excluirFoto(f.id, f.src);
+          if (ok) {
+            mostrarToast('Foto removida 🍂');
+            await renderGaleria();
+            await renderDestaques();
+          }
         }
       });
       galeria.appendChild(card);
@@ -67,8 +73,8 @@ function renderGaleria() {
   }
 }
 
-function renderDestaques() {
-  const fotos = carregarFotos();
+async function renderDestaques() {
+  const fotos = await carregarFotos();
   const cores = ['#EFE6D8', '#E9EDE2', '#F3E4DD'];
   $$('[data-hero]').forEach((el, i) => {
     el.innerHTML = fotos[i]
@@ -92,17 +98,11 @@ $$('.filtro').forEach(btn => btn.addEventListener('click', () => {
 /* Lightbox */
 function abrirLightbox(f) {
   $('#lightboxImg').src = f.src;
-  $('#lightboxImg').alt = f.titulo || NOMES_CAT[f.cat];
-  $('#lightboxLegenda').textContent = f.titulo || NOMES_CAT[f.cat];
+  $('#lightboxImg').alt = f.titulo || NOMES_CAT[f.cat] || '';
+  $('#lightboxLegenda').textContent = f.titulo || NOMES_CAT[f.cat] || '';
   $('#lightbox').classList.add('aberto');
 }
 $('#lightboxFechar').addEventListener('click', () => $('#lightbox').classList.remove('aberto'));
 $('#lightbox').addEventListener('click', e => {
   if (e.target === $('#lightbox')) $('#lightbox').classList.remove('aberto');
-});
-
-/* Re-renderizar quando o storage mudar */
-document.addEventListener('fotos-atualizadas', () => {
-  renderGaleria();
-  renderDestaques();
 });

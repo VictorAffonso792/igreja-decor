@@ -1,9 +1,9 @@
 /* ===== INICIALIZAÇÃO ===== */
-(function () {
+(async function () {
   /* Ano dinâmico */
   $('#ano').textContent = new Date().getFullYear();
 
-  /* Links de WhatsApp e Instagram a partir do CONFIG */
+  /* Links de WhatsApp e Instagram */
   const linkWhats = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(CONFIG.mensagemWhatsApp)}`;
   $('#btnWhats').href = linkWhats;
   $('#whatsFloat').href = linkWhats;
@@ -11,6 +11,6 @@
   $('#instaHandle').textContent = `@${CONFIG.instagram}`;
 
   /* Primeira renderização */
-  renderGaleria();
-  renderDestaques();
+  await renderGaleria();
+  await renderDestaques();
 })();

@@ -1,9 +1,13 @@
-/* ============ CONFIGURAÇÃO — IGREJA DECOR ============
-   Troque os valores abaixo antes de publicar o site.   */
+/* ============ CONFIGURAÇÃO — IGREJA DECOR ============ */
 const CONFIG = {
-  senha: 'igreja123',              // Senha do painel admin
-  whatsapp: '5500000000000',       // Número com DDI+DDD (ex: 5511999998888)
-  instagram: 'igrejadecor',        // @ do Instagram (sem o @)
+  senha: 'igreja123',
+  whatsapp: '5500000000000',
+  instagram: 'igrejadecor',
   nomeNegocio: 'Igreja Decor',
-  mensagemWhatsApp: 'Oi! Vi o site da Igreja Decor e quero um orçamento 🌸'
+  mensagemWhatsApp: 'Oi! Vi o site da Igreja Decor e quero um orçamento 🌸',
+
+  /* Supabase */
+  supabaseUrl: 'https://hyjdznnadnjznxidzryi.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5amR6bm5hZG5qem54aWR6cnlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTMxMzgsImV4cCI6MjA5Njc2OTEzOH0.n5gRAkb_7s1RtdtbMKfoI-BdDUWFigGOY1nar9e6v8o',
+  supabaseBucket: 'Fotos'
 };
