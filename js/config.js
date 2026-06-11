@@ -1,7 +1,7 @@
 /* ============ CONFIGURAÇÃO — IGREJA DECOR ============ */
 const CONFIG = {
   senha: 'igreja123',
-  whatsapp: '5500000000000',
+  whatsapp: '5514996643075',
   instagram: 'igrejadecor',
   nomeNegocio: 'Igreja Decor',
   mensagemWhatsApp: 'Oi! Vi o site da Igreja Decor e quero um orçamento 🌸',
