@@ -40,7 +40,7 @@ async function renderGaleria() {
   galeria.innerHTML = '';
 
   if (fotos.length) {
-    const filtradas = fotos.filter(f => filtroAtivo === 'todos' || f.cat === filtroAtivo);
+    const filtradas = fotos.filter(f => f.cat !== 'sobre' && (filtroAtivo === 'todos' || f.cat === filtroAtivo));
     if (!filtradas.length) {
       galeria.innerHTML = '<div class="galeria-vazia">Ainda não há fotos nessa categoria 🌱<br><small>Use a Área da Igreja Decor para adicionar.</small></div>';
       return;
@@ -82,15 +82,33 @@ async function renderGaleria() {
 async function renderDestaques() {
   let fotos = [];
   try { fotos = await carregarFotos(); } catch(e) {}
+  
+  /* Fotos do portfólio (excluindo "sobre") para os arcos do hero */
+  const fotosPortfolio = fotos.filter(f => f.cat !== 'sobre');
   const cores = ['#EFE6D8', '#E9EDE2', '#F3E4DD'];
   $$('[data-hero]').forEach((el, i) => {
-    el.innerHTML = fotos[i]
-      ? `<img src="${fotos[i].src}" alt="${fotos[i].titulo || 'Trabalho Igreja Decor'}">`
+    el.innerHTML = fotosPortfolio[i]
+      ? `<img src="${fotosPortfolio[i].src}" alt="${fotosPortfolio[i].titulo || 'Trabalho Igreja Decor'}">`
       : placeholderHTML(cores[i]);
   });
+  
+  /* Foto da seção Sobre */
+  const fotoSobre = fotos.find(f => f.cat === 'sobre');
   const sobre = $('#sobrePhoto');
-  if (sobre && !sobre.querySelector('img')) {
-    sobre.innerHTML = placeholderHTML('#EDE7DA', 'Sua foto aqui 💚');
+  if (sobre) {
+    if (fotoSobre) {
+      sobre.innerHTML = '<img src="' + fotoSobre.src + '" alt="Igreja Decor">';
+    } else {
+      sobre.innerHTML = placeholderHTML('#EDE7DA', 'Sua foto aqui 💚');
+    }
+    /* No modo admin, clicar no sobre abre o upload */
+    sobre.style.cursor = document.body.classList.contains('admin') ? 'pointer' : '';
+    sobre.onclick = function() {
+      if (document.body.classList.contains('admin')) {
+        document.getElementById('selCategoria').value = 'sobre';
+        document.getElementById('btnAddFoto').click();
+      }
+    };
   }
 }
 
