@@ -29,8 +29,14 @@ function placeholderHTML(cor, texto) {
 async function renderGaleria() {
   const galeria = $('#galeria');
   galeria.innerHTML = '<div style="text-align:center;padding:40px;color:var(--tinta-suave)">Carregando fotos...</div>';
-  
-  const fotos = await carregarFotos();
+
+  let fotos = [];
+  try {
+    fotos = await carregarFotos();
+  } catch (e) {
+    console.error('Erro renderGaleria:', e);
+  }
+
   galeria.innerHTML = '';
 
   if (fotos.length) {
@@ -74,7 +80,8 @@ async function renderGaleria() {
 }
 
 async function renderDestaques() {
-  const fotos = await carregarFotos();
+  let fotos = [];
+  try { fotos = await carregarFotos(); } catch(e) {}
   const cores = ['#EFE6D8', '#E9EDE2', '#F3E4DD'];
   $$('[data-hero]').forEach((el, i) => {
     el.innerHTML = fotos[i]

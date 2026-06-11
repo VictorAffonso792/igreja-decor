@@ -1,19 +1,30 @@
 /* ===== SUPABASE — CAMADA DE PERSISTÊNCIA ===== */
-const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-const BUCKET = CONFIG.supabaseBucket;
+let _sb = null;
+function getSupabase() {
+  if (_sb) return _sb;
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error('Supabase JS não carregou. Verifique a conexão.');
+    return null;
+  }
+  _sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+  return _sb;
+}
 
-/* Cache local para evitar requests repetidos */
+const BUCKET = CONFIG.supabaseBucket;
 let _cacheGaleria = null;
 let _cacheTs = 0;
-const CACHE_TTL = 5000; // 5s
+const CACHE_TTL = 5000;
 
 async function carregarFotos(forceRefresh) {
+  const sb = getSupabase();
+  if (!sb) return [];
+
   const now = Date.now();
   if (!forceRefresh && _cacheGaleria && (now - _cacheTs < CACHE_TTL)) {
     return _cacheGaleria;
   }
   try {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('fotos')
       .select('*')
       .order('created_at', { ascending: false });
@@ -23,38 +34,35 @@ async function carregarFotos(forceRefresh) {
     return _cacheGaleria;
   } catch (e) {
     console.error('Erro ao carregar fotos:', e);
-    mostrarToast('Erro ao carregar fotos 🌧️');
     return _cacheGaleria || [];
   }
 }
 
 async function uploadFoto(file, cat, titulo) {
+  const sb = getSupabase();
+  if (!sb) return null;
   try {
-    /* Nome único para o arquivo */
     const ext = file.type === 'image/png' ? 'png' : 'jpg';
     const nome = `${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
 
-    /* Upload para o Storage */
-    const { error: upErr } = await supabase.storage
+    const { error: upErr } = await sb.storage
       .from(BUCKET)
       .upload(nome, file, { contentType: file.type, upsert: false });
     if (upErr) throw upErr;
 
-    /* URL pública da imagem */
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = sb.storage
       .from(BUCKET)
       .getPublicUrl(nome);
     const src = urlData.publicUrl;
 
-    /* Inserir no banco de dados */
-    const { data, error: dbErr } = await supabase
+    const { data, error: dbErr } = await sb
       .from('fotos')
       .insert({ src, cat, titulo: titulo || '' })
       .select()
       .single();
     if (dbErr) throw dbErr;
 
-    _cacheGaleria = null; // invalida cache
+    _cacheGaleria = null;
     return data;
   } catch (e) {
     console.error('Erro no upload:', e);
@@ -64,18 +72,14 @@ async function uploadFoto(file, cat, titulo) {
 }
 
 async function excluirFoto(id, src) {
+  const sb = getSupabase();
+  if (!sb) return false;
   try {
-    /* Extrair nome do arquivo da URL */
     const partes = src.split('/');
     const nomeArquivo = partes[partes.length - 1];
-
-    /* Deletar do Storage */
-    await supabase.storage.from(BUCKET).remove([nomeArquivo]);
-
-    /* Deletar do banco */
-    const { error } = await supabase.from('fotos').delete().eq('id', id);
+    await sb.storage.from(BUCKET).remove([nomeArquivo]);
+    const { error } = await sb.from('fotos').delete().eq('id', id);
     if (error) throw error;
-
     _cacheGaleria = null;
     return true;
   } catch (e) {

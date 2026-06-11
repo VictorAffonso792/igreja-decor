@@ -5,7 +5,7 @@ body{
   color:var(--tinta);
   line-height:1.7;
   font-size:16px;
-  overflow-x:hidden;
+  overflow-x:hidden;-webkit-text-size-adjust:100%;
 }
 .container{max-width:1100px;margin:0 auto;padding:0 24px}
 h1,h2,h3{font-family:var(--font-display);font-weight:500;line-height:1.2}

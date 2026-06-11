@@ -1,7 +1,7 @@
 /* ===== HERO ===== */
 .hero{
   min-height:100vh;display:flex;align-items:center;
-  padding:140px 0 80px;position:relative;
+  padding:140px 0 80px;position:relative;overflow:hidden;
 }
 .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
 .hero h1{font-size:clamp(40px,6vw,68px);color:var(--oliva);margin-bottom:24px}
